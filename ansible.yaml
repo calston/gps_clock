@@ -1,0 +1,73 @@
+---
+
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Install stuff
+      package:
+        name:
+          - ntpsec
+          - gpsd
+          - gpsd-clients
+          - python-setuptools
+          - python3-setuptools
+          - python3-pip
+          - python3-venv
+          - python3-dev
+          - libfreetype6-dev
+          - libjpeg-dev
+          - build-essential
+          - libopenjp2-7
+          - libtiff5
+        state: latest
+
+    - name: Create display directory
+      file:
+        path: /opt/display
+        state: directory
+        mode: '0755'
+
+    - name: Copy files
+      copy:
+        src: display/
+        dest: /opt/display
+
+    - name: Create venv
+      shell: python3 -m venv venv
+      args:
+        chdir: /opt/display/
+        creates: /opt/display/venv/bin/python
+
+    - name: Configure venv
+      shell: /opt/display/venv/bin/pip install -r /opt/display/requirements.txt
+      args:
+        chdir: /opt/display/
+        creates: /opt/display/venv/lib/python3.7/site-packages/luma
+
+    - name: Configure NTP
+      copy:
+        src: configs/ntpd.conf
+        dest: /etc/ntpsec/ntpd.conf
+
+    - name: Configure GPSD
+      copy:
+        src: configs/gpsd.default
+        dest: /etc/default/gpsd
+
+    - name: Configure Raspberry Pi
+      copy:
+        src: configs/config.txt
+        dest: /boot/config.txt
+
+    - name: Configure display service
+      copy:
+        src: configs/gps-display.service
+        dest: /lib/systemd/system/gps-display.service
+
+    - shell: systemctl restart gpsd.socket
+    - shell: systemctl restart ntpsec
+    - shell: systemctl daemon-reload
+    - shell: systemctl enable gps-display.service
+    - shell: systemctl start gps-display.service
+ 

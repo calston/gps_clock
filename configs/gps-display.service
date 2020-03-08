@@ -1,0 +1,13 @@
+[Unit]
+Description=GPS LCD display
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/display
+ExecStart=/opt/display/venv/bin/python /opt/display/main.py
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
